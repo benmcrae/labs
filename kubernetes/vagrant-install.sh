@@ -21,6 +21,12 @@ sysctl --system
 wget https://github.com/opencontainers/runc/releases/download/v1.1.9/runc.amd64
 install -m 755 runc.amd64 /usr/local/sbin/runc
 
+# Install gVisor (runsc)
+wget https://storage.googleapis.com/gvisor/releases/release/latest/x86_64/runsc
+wget https://storage.googleapis.com/gvisor/releases/release/latest/x86_64/containerd-shim-runsc-v1
+chmod a+rx runsc containerd-shim-runsc-v1
+mv runsc containerd-shim-runsc-v1 /usr/local/bin
+
 # Install containerd
 wget https://github.com/containerd/containerd/releases/download/v1.7.6/containerd-1.7.6-linux-amd64.tar.gz
 tar Cxzvf /usr/local containerd-1.7.6-linux-amd64.tar.gz
@@ -30,6 +36,10 @@ wget https://raw.githubusercontent.com/containerd/containerd/main/containerd.ser
 mkdir -p /etc/containerd/
 containerd config default > /etc/containerd/config.toml
 sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
+cat >> /etc/containerd/config.toml << EOF
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runsc]
+  runtime_type = "io.containerd.runsc.v1"
+EOF
 systemctl restart containerd
 
 # Start containerd
@@ -44,12 +54,6 @@ tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v1.3.0.tgz
 # Install nerdctl
 wget https://github.com/containerd/nerdctl/releases/download/v1.5.0/nerdctl-1.5.0-linux-amd64.tar.gz
 tar -xzvv -C /usr/local/bin -f nerdctl-1.5.0-linux-amd64.tar.gz nerdctl
-
-# Install gVisor (runcs)
-wget https://storage.googleapis.com/gvisor/releases/release/latest/x86_64/runsc
-wget https://storage.googleapis.com/gvisor/releases/release/latest/x86_64/containerd-shim-runsc-v1
-chmod a+rx runsc containerd-shim-runsc-v1
-mv runsc containerd-shim-runsc-v1 /usr/local/bin
 
 # Install Kubernetes
 curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
@@ -67,6 +71,15 @@ chown vagrant:vagrant /home/vagrant/.kube/config
 # Allow workloads to run on the control plane node
 export KUBECONFIG=/etc/kubernetes/admin.conf
 kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+
+# Create RuntimeClass for gVisor
+cat <<EOF | kubectl apply -f -
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: gvisor
+handler: runsc
+EOF
 
 # Install Calico
 kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml

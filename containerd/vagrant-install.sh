@@ -44,9 +44,3 @@ tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v1.3.0.tgz
 # Install nerdctl
 wget https://github.com/containerd/nerdctl/releases/download/v1.5.0/nerdctl-1.5.0-linux-amd64.tar.gz
 tar -xzvv -C /usr/local/bin -f nerdctl-1.5.0-linux-amd64.tar.gz nerdctl
-
-# Install gVisor (runcs)
-wget https://storage.googleapis.com/gvisor/releases/release/latest/x86_64/runsc
-wget https://storage.googleapis.com/gvisor/releases/release/latest/x86_64/containerd-shim-runsc-v1
-chmod a+rx runsc containerd-shim-runsc-v1
-mv runsc containerd-shim-runsc-v1 /usr/local/bin
