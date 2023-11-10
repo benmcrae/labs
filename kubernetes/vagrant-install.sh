@@ -1,3 +1,7 @@
+# Disable swap space
+swapoff -a
+sed -i 's|/swap.*|#|' /etc/fstab
+
 # Install prerequisite
 apt-get update
 apt-get install -y apt-transport-https ca-certificates curl
@@ -18,18 +22,18 @@ EOF
 sysctl --system
 
 # Install runc
-wget https://github.com/opencontainers/runc/releases/download/v1.1.9/runc.amd64
-install -m 755 runc.amd64 /usr/local/sbin/runc
+wget https://github.com/opencontainers/runc/releases/download/v1.1.10/runc.arm64
+install -m 755 runc.arm64 /usr/local/sbin/runc
 
 # Install gVisor (runsc)
-wget https://storage.googleapis.com/gvisor/releases/release/latest/x86_64/runsc
-wget https://storage.googleapis.com/gvisor/releases/release/latest/x86_64/containerd-shim-runsc-v1
+wget https://storage.googleapis.com/gvisor/releases/release/latest/aarch64/runsc
+wget https://storage.googleapis.com/gvisor/releases/release/latest/aarch64/containerd-shim-runsc-v1
 chmod a+rx runsc containerd-shim-runsc-v1
 mv runsc containerd-shim-runsc-v1 /usr/local/bin
 
 # Install containerd
-wget https://github.com/containerd/containerd/releases/download/v1.7.6/containerd-1.7.6-linux-amd64.tar.gz
-tar Cxzvf /usr/local containerd-1.7.6-linux-amd64.tar.gz
+wget https://github.com/containerd/containerd/releases/download/v1.7.8/containerd-1.7.8-linux-arm64.tar.gz
+tar Cxzvf /usr/local containerd-1.7.8-linux-arm64.tar.gz
 wget https://raw.githubusercontent.com/containerd/containerd/main/containerd.service -O /lib/systemd/system/containerd.service
 
 # Configure containerd
@@ -47,13 +51,13 @@ systemctl daemon-reload
 systemctl enable --now containerd
 
 # Install CNI plugins
-wget https://github.com/containernetworking/plugins/releases/download/v1.3.0/cni-plugins-linux-amd64-v1.3.0.tgz
+wget https://github.com/containernetworking/plugins/releases/download/v1.3.0/cni-plugins-linux-arm64-v1.3.0.tgz
 mkdir -p /opt/cni/bin
-tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v1.3.0.tgz
+tar Cxzvf /opt/cni/bin cni-plugins-linux-arm64-v1.3.0.tgz
 
 # Install nerdctl
-wget https://github.com/containerd/nerdctl/releases/download/v1.5.0/nerdctl-1.5.0-linux-amd64.tar.gz
-tar -xzvv -C /usr/local/bin -f nerdctl-1.5.0-linux-amd64.tar.gz nerdctl
+wget https://github.com/containerd/nerdctl/releases/download/v1.7.0/nerdctl-1.7.0-linux-arm64.tar.gz
+tar -xzvv -C /usr/local/bin -f nerdctl-1.7.0-linux-arm64.tar.gz nerdctl
 
 # Install Kubernetes
 curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
